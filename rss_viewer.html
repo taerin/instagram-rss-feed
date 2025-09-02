@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram RSS Viewer</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -79,14 +79,14 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- <div class="container">
         <div class="header">
             <h1>Instagram RSS Viewer</h1>
         </div>
         <div class="feed-list" id="feedList">
             <div class="loading">RSS 피드를 불러오는 중...</div>
         </div>
-    </div>
+    </div> -->
 
     <script>
         function getUrlParameter(name) {
@@ -144,7 +144,7 @@
         }
 
         window.onload = function() {
-            const username = getUrlParameter('user') || 'blackpinkofficial';
+            const username = getUrlParameter('user') || 'hopenest_official';
             loadRSSFeed(username);
         }
     </script>
