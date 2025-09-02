@@ -44,9 +44,11 @@ type AtomAuthor struct {
 
 // RSS-Bridge 서버 목록 (공개 인스턴스들)
 var rssBridgeServers = []string{
-	"https://rss-bridge.org/bridge01/",
-	"https://wtf.roflcopter.fr/rss-bridge/",
-	"https://rssbridge.flossboxin.org.in/",
+	"https://rss-bridge.snopyta.org",
+	"https://rssbridge.badayco.com",
+	"https://rss.nixnet.services",
+	"https://rss-bridge.org/bridge01",
+	"https://wtf.roflcopter.fr/rss-bridge",
 }
 
 func FetchFromRSSBridge(username string) ([]Post, error) {
@@ -65,14 +67,17 @@ func tryRSSBridgeServer(server, username string) ([]Post, error) {
 	bridgeURL := fmt.Sprintf("%s?bridge=Instagram&context=Username&format=Atom&server_url=%s", server, url.QueryEscape(username))
 
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 15 * time.Second,
 	}
 	req, err := http.NewRequest("GET", bridgeURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "Instagram-RSS-Feed/1.0")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppliWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari /537.36")
+	req.Header.Set("Accept", "application/atom+xml, application/xml, text/xml, */*")
+	req.Header.Set("Accept-Lanugage", "en-US,en;q=0.9")
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -86,6 +91,11 @@ func tryRSSBridgeServer(server, username string) ([]Post, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "<html") || strings.Contains(bodyStr, "<!DOCTYPE") {
+		return nil, fmt.Errorf("received HTML response instead of Atom feed")
 	}
 
 	return parseAtomFeed(body, username)
