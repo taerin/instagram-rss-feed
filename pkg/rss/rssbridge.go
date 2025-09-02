@@ -44,11 +44,8 @@ type AtomAuthor struct {
 
 // RSS-Bridge 서버 목록 (공개 인스턴스들)
 var rssBridgeServers = []string{
-	"https://rss-bridge.snopyta.org",
-	"https://rssbridge.badayco.com",
-	"https://rss.nixnet.services",
-	"https://rss-bridge.org/bridge01",
-	"https://wtf.roflcopter.fr/rss-bridge",
+	// "https://rss-bridge.org/bridge01/?action=display&bridge=Instagram&context=Username&u=%s&format=Atom",
+	"https://wtf.roflcopter.fr/rss-bridge/?action=display&bridge=Instagram&context=Username&u=%s&format=Atom",
 }
 
 func FetchFromRSSBridge(username string) ([]Post, error) {
@@ -64,7 +61,11 @@ func FetchFromRSSBridge(username string) ([]Post, error) {
 }
 
 func tryRSSBridgeServer(server, username string) ([]Post, error) {
-	bridgeURL := fmt.Sprintf("%s?bridge=Instagram&context=Username&format=Atom&server_url=%s", server, url.QueryEscape(username))
+	// bridgeURL := fmt.Sprintf("%s?bridge=Instagram&context=Username&format=Atom&server_url=%s", server, url.QueryEscape(username))
+	var bridgeURL string
+	if strings.Contains(server, "%s") {
+		bridgeURL = fmt.Sprintf(server, url.QueryEscape(username))
+	}
 
 	client := &http.Client{
 		Timeout: 15 * time.Second,
@@ -74,9 +75,11 @@ func tryRSSBridgeServer(server, username string) ([]Post, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppliWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari /537.36")
-	req.Header.Set("Accept", "application/atom+xml, application/xml, text/xml, */*")
-	req.Header.Set("Accept-Lanugage", "en-US,en;q=0.9")
+	// req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+	// req.Header.Set("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml, */*")
+	// req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+
+	req.Header.Set("User-Agent", "riley")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -100,6 +103,48 @@ func tryRSSBridgeServer(server, username string) ([]Post, error) {
 
 	return parseAtomFeed(body, username)
 }
+
+// func tryRSSHubServer(baseURL, username string) (Post, error) {
+// 	// RSSHub URL 생성: baseURL + url.QueryEscape(username)
+// 	rssURL := baseURL + url.QueryEscape(username)
+
+// 	client := &http.Client{
+// 		Timeout: 15 * time.Second,
+// 	}
+
+// 	req, err := http.NewRequest("GET", rssURL, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// RSSHub용 헤더
+// 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+// 	req.Header.Set("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml, */*")
+// 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != 200 {
+// 		return nil, fmt.Errorf("server returned status %d", resp.StatusCode)
+// 	}
+
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// 응답이 HTML인지 확인
+// 	bodyStr := string(body)
+// 	if strings.Contains(bodyStr, "<html>") || strings.Contains(bodyStr, "<!DOCTYPE>") {
+// 		return nil, fmt.Errorf("received HTML response instead of RSS/Atom feed")
+// 	}
+
+// 	return parseAtomFeed(body, username)
+// }
 
 func parseAtomFeed(xmlData []byte, username string) ([]Post, error) {
 	var feed AtomFeed
