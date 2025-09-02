@@ -17,21 +17,28 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
     - name: Setup Go
       uses: actions/setup-go@v4
       with:
         go-version: '1.21'
+
     - name: Cache Go modules
       uses: actions/cache@v3
       with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: v2-${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-
+          v2-${{ runner.os }}-go-
+
     - name: Install dependencies
       run: go mod tidy
+
     - name: Generate RSS feed for BLACKPINK
       run: go run cmd/rss-generator/main.go blackpinkofficial
+
     - name: Check for changes
       id: verify-changed-files
       run: |
@@ -40,6 +47,7 @@ jobs:
         else
           echo "changed=true" >> $GITHUB_OUTPUT
         fi
+
     - name: Commit and push changes
       if: steps.verify-changed-files.outputs.changed == 'true'
       run: |
@@ -48,6 +56,7 @@ jobs:
         git add blackpinkofficial_feed.xml
         git commit -m "Auto-update RSS feed - $(date +'%Y-%m-%d %H:%M:%S UTC')"
         git push
+
     - name: Deploy to GitHub Pages
       if: steps.verify-changed-files.outputs.changed == 'true'
       uses: peaceiris/actions-gh-pages@v3
